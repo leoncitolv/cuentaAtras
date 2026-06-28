@@ -19,17 +19,26 @@ const NOTIFY_OPTIONS = [
 ];
 
 const DEFAULT_NOTIFY = ['1d', '1h', 'due'];
-const STORAGE_KEY = 'cuentaalerta_reminders_draft_v3';
+const STORAGE_KEY = 'cuentaalerta_reminders_draft_v4';
+const OLD_STORAGE_KEYS = ['cuentaalerta_reminders_draft_v3', 'cuentaalerta_reminders_draft_v2'];
 const GITHUB_CONFIG_KEY = 'cuentaalerta_github_config_v1';
+const VIEW_KEY = 'cuentaalerta_active_view_v4';
 let reminders = [];
 let activeCategory = 'Todos';
+let activeView = localStorage.getItem(VIEW_KEY) || 'cards';
 let selectedColor = 'purple';
+let calendarMonth = new Date();
+let selectedCalendarKey = dateKey(new Date());
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
 const els = {
   list: $('#reminderList'),
+  agenda: $('#agendaList'),
+  calendarGrid: $('#calendarGrid'),
+  selectedDayList: $('#selectedDayList'),
+  calendarTitle: $('#calendarTitle'),
   empty: $('#emptyState'),
   search: $('#searchInput'),
   chips: $('#categoryChips'),
@@ -41,7 +50,11 @@ const els = {
   toast: $('#toast'),
   nextTitle: $('#nextTitle'),
   nextMeta: $('#nextMeta'),
-  nextBadge: $('#nextBadge')
+  nextBadge: $('#nextBadge'),
+  statToday: $('#statToday'),
+  statWeek: $('#statWeek'),
+  statLate: $('#statLate'),
+  statTotal: $('#statTotal')
 };
 
 function pad(num) { return String(num).padStart(2, '0'); }
@@ -55,14 +68,19 @@ function slugify(text) {
     .slice(0, 44) || 'recordatorio';
 }
 
+function dateKey(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 function toLocalInputValue(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 function parseDue(value) {
   if (!value) return null;
-  const normalized = value.includes('T') ? value : value.replace(' ', 'T');
-  return new Date(normalized);
+  const normalized = String(value).includes('T') ? String(value) : String(value).replace(' ', 'T');
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function formatDue(date) {
@@ -70,6 +88,16 @@ function formatDue(date) {
     weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit'
   }).format(date);
+}
+
+function formatDay(date) {
+  return new Intl.DateTimeFormat('es-MX', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }).format(date);
+}
+
+function formatTime(date) {
+  return new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
 function getRemaining(due) {
@@ -82,11 +110,17 @@ function getRemaining(due) {
   return { ms, days, hours, minutes, seconds };
 }
 
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function isSameDay(a, b) { return dateKey(a) === dateKey(b); }
+
 function statusFor(due) {
   const { ms } = getRemaining(due);
   if (ms < 0) return 'Vencido';
   if (ms <= 3600000) return 'Última hora';
-  if (ms <= 86400000) return 'Hoy';
+  if (isSameDay(due, new Date())) return 'Hoy';
   if (ms <= 7 * 86400000) return 'Esta semana';
   return 'Próximo';
 }
@@ -109,17 +143,11 @@ function cleanReminder(item) {
   };
 }
 
-
 function inferGithubConfig() {
   const host = location.hostname;
   const parts = location.pathname.split('/').filter(Boolean);
   if (host.endsWith('.github.io') && parts.length) {
-    return {
-      owner: host.replace('.github.io', ''),
-      repo: parts[0],
-      branch: 'main',
-      token: ''
-    };
+    return { owner: host.replace('.github.io', ''), repo: parts[0], branch: 'main', token: '' };
   }
   return { owner: '', repo: '', branch: 'main', token: '' };
 }
@@ -165,11 +193,7 @@ function fillConfigForm() {
   $('#githubTokenInput').value = config.token;
 }
 
-function openConfig() {
-  fillConfigForm();
-  els.configDialog.showModal();
-}
-
+function openConfig() { fillConfigForm(); els.configDialog.showModal(); }
 function closeConfig() { els.configDialog.close(); }
 
 function githubHeaders(token) {
@@ -197,16 +221,10 @@ function validateGithubConfig(config) {
 }
 
 async function getReminderFile(config) {
-  const response = await fetch(githubApiUrl(config), {
-    method: 'GET',
-    headers: githubHeaders(config.token)
-  });
+  const response = await fetch(githubApiUrl(config), { method: 'GET', headers: githubHeaders(config.token) });
   if (response.status === 404) return { sha: null };
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message = data?.message || `GitHub respondió HTTP ${response.status}`;
-    throw new Error(message);
-  }
+  if (!response.ok) throw new Error(data?.message || `GitHub respondió HTTP ${response.status}`);
   return { sha: data.sha || null };
 }
 
@@ -224,13 +242,8 @@ async function testGithubConnection() {
 
 async function saveToGithub() {
   const config = loadGithubConfig();
-  try {
-    validateGithubConfig(config);
-  } catch (error) {
-    toast('Configura GitHub primero.');
-    openConfig();
-    return;
-  }
+  try { validateGithubConfig(config); }
+  catch (error) { toast('Configura GitHub primero.'); openConfig(); return; }
 
   document.body.classList.add('github-saving');
   $('#saveGithubBtn').disabled = true;
@@ -239,7 +252,7 @@ async function saveToGithub() {
   try {
     const file = await getReminderFile(config);
     const body = {
-      message: `Actualizar reminders.json desde CuentaAlerta ${new Date().toLocaleString('es-MX')}`,
+      message: `Actualizar reminders.json desde CuentaAlerta Pro ${new Date().toLocaleString('es-MX')}`,
       content: toBase64Utf8(exportData()),
       branch: config.branch || 'main'
     };
@@ -247,18 +260,12 @@ async function saveToGithub() {
 
     const response = await fetch(githubApiUrl(config).replace(/\?ref=.*/, ''), {
       method: 'PUT',
-      headers: {
-        ...githubHeaders(config.token),
-        'Content-Type': 'application/json'
-      },
+      headers: { ...githubHeaders(config.token), 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
 
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const message = data?.message || `GitHub respondió HTTP ${response.status}`;
-      throw new Error(message);
-    }
+    if (!response.ok) throw new Error(data?.message || `GitHub respondió HTTP ${response.status}`);
 
     saveDraft();
     toast('✅ Guardado en GitHub. Telegram avisará según tus fechas.');
@@ -279,6 +286,16 @@ function clearGithubToken() {
   toast('Token borrado de este dispositivo.');
 }
 
+function localDraft() {
+  const current = localStorage.getItem(STORAGE_KEY);
+  if (current) return current;
+  for (const key of OLD_STORAGE_KEYS) {
+    const old = localStorage.getItem(key);
+    if (old) return old;
+  }
+  return null;
+}
+
 async function loadReminders() {
   try {
     const response = await fetch(`reminders.json?cache=${Date.now()}`, { cache: 'no-store' });
@@ -287,17 +304,15 @@ async function loadReminders() {
     reminders = Array.isArray(data) ? data.map(cleanReminder) : [];
   } catch (error) {
     console.warn(error);
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localDraft();
     reminders = saved ? JSON.parse(saved).map(cleanReminder) : [];
     toast('No pude leer reminders.json; usé borrador local si existía.');
   }
-  const draft = localStorage.getItem(STORAGE_KEY);
+  const draft = localDraft();
   if (draft) {
     try {
       const local = JSON.parse(draft);
-      if (Array.isArray(local) && local.length) {
-        reminders = local.map(cleanReminder);
-      }
+      if (Array.isArray(local) && local.length) reminders = local.map(cleanReminder);
     } catch {}
   }
   renderAll();
@@ -320,13 +335,26 @@ function filteredReminders() {
   return reminders
     .filter((item) => activeCategory === 'Todos' || item.category === activeCategory)
     .filter((item) => !q || `${item.title} ${item.notes} ${item.category}`.toLowerCase().includes(q))
-    .sort((a, b) => parseDue(a.due) - parseDue(b.due));
+    .sort((a, b) => (parseDue(a.due)?.getTime() || 0) - (parseDue(b.due)?.getTime() || 0));
 }
 
 function renderAll() {
+  renderViewSwitch();
   renderChips();
   renderCards();
+  renderAgenda();
+  renderCalendar();
   renderHero();
+  renderStats();
+  updateEmptyState();
+}
+
+function renderViewSwitch() {
+  $$('.view-switch button').forEach((button) => {
+    button.classList.toggle('active', button.dataset.view === activeView);
+  });
+  $$('.view-panel').forEach((panel) => panel.classList.remove('active'));
+  $(`#${activeView}View`)?.classList.add('active');
 }
 
 function renderChips() {
@@ -337,12 +365,21 @@ function renderChips() {
     const btn = document.createElement('button');
     btn.className = `chip ${cat === activeCategory ? 'active' : ''}`;
     btn.textContent = cat;
-    btn.addEventListener('click', () => {
-      activeCategory = cat;
-      renderAll();
-    });
+    btn.addEventListener('click', () => { activeCategory = cat; renderAll(); });
     els.chips.appendChild(btn);
   });
+}
+
+function renderStats() {
+  const now = new Date();
+  const today = startOfDay(now);
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+  const week = new Date(now.getTime() + 7 * 86400000);
+  const valid = reminders.map((item) => parseDue(item.due)).filter(Boolean);
+  els.statToday.textContent = valid.filter((d) => d >= today && d < tomorrow).length;
+  els.statWeek.textContent = valid.filter((d) => d >= now && d <= week).length;
+  els.statLate.textContent = valid.filter((d) => d < now).length;
+  els.statTotal.textContent = reminders.length;
 }
 
 function renderHero() {
@@ -353,7 +390,7 @@ function renderHero() {
 
   if (!upcoming) {
     els.nextTitle.textContent = reminders.length ? 'No hay próximos pendientes' : 'Crea tu primer aviso';
-    els.nextMeta.textContent = reminders.length ? 'Todos los recordatorios están vencidos.' : 'Agrega fechas y exporta reminders.json.';
+    els.nextMeta.textContent = reminders.length ? 'Todos los recordatorios están vencidos.' : 'Agrega fechas y guarda en GitHub.';
     els.nextBadge.textContent = reminders.length ? 'OK' : '+';
     return;
   }
@@ -366,7 +403,6 @@ function renderHero() {
 function renderCards() {
   const items = filteredReminders();
   els.list.innerHTML = '';
-  els.empty.hidden = items.length !== 0;
 
   items.forEach((item) => {
     const due = parseDue(item.due);
@@ -382,15 +418,129 @@ function renderCards() {
     node.querySelector('.duplicate-btn').addEventListener('click', () => duplicateReminder(item.id));
     els.list.appendChild(node);
   });
-  updateCountdowns();
+  updateCountdowns(false);
 }
 
-function updateCountdowns() {
+function agendaBucket(due) {
+  const now = new Date();
+  const today = startOfDay(now);
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+  const afterTomorrow = new Date(today); afterTomorrow.setDate(afterTomorrow.getDate() + 2);
+  const week = new Date(today); week.setDate(week.getDate() + 8);
+  const month = new Date(today); month.setMonth(month.getMonth() + 1);
+  if (due < now) return 'Vencidos';
+  if (due >= today && due < tomorrow) return 'Hoy';
+  if (due >= tomorrow && due < afterTomorrow) return 'Mañana';
+  if (due < week) return 'Próximos 7 días';
+  if (due < month) return 'Este mes';
+  return 'Después';
+}
+
+function renderAgenda() {
+  const buckets = new Map();
+  const order = ['Vencidos', 'Hoy', 'Mañana', 'Próximos 7 días', 'Este mes', 'Después'];
+  filteredReminders().forEach((item) => {
+    const due = parseDue(item.due);
+    if (!due) return;
+    const bucket = agendaBucket(due);
+    if (!buckets.has(bucket)) buckets.set(bucket, []);
+    buckets.get(bucket).push({ item, due });
+  });
+  els.agenda.innerHTML = '';
+  order.forEach((name) => {
+    const entries = buckets.get(name) || [];
+    if (!entries.length) return;
+    const section = document.createElement('section');
+    section.className = 'agenda-section';
+    section.innerHTML = `<h3>${name}<span>${entries.length}</span></h3>`;
+    entries.forEach(({ item, due }) => section.appendChild(agendaItemNode(item, due)));
+    els.agenda.appendChild(section);
+  });
+  if (!els.agenda.children.length) {
+    els.agenda.innerHTML = '<section class="agenda-section"><h3>Agenda limpia<span>0</span></h3><p class="muted-note">No hay pendientes con los filtros actuales.</p></section>';
+  }
+}
+
+function agendaItemNode(item, due) {
+  const row = document.createElement('button');
+  row.className = 'agenda-item';
+  row.style.setProperty('--item-color', COLORS[item.color] || COLORS.purple);
+  row.innerHTML = `
+    <span class="agenda-dot"></span>
+    <span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(formatDay(due))} · ${escapeHtml(item.category || 'Personal')}</small></span>
+    <span class="agenda-time">${escapeHtml(formatTime(due))}</span>
+  `;
+  row.addEventListener('click', () => openForm(item.id));
+  return row;
+}
+
+function renderCalendar() {
+  const title = new Intl.DateTimeFormat('es-MX', { month: 'long', year: 'numeric' }).format(calendarMonth);
+  els.calendarTitle.textContent = title;
+  els.calendarGrid.innerHTML = '';
+  const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+  const offset = (first.getDay() + 6) % 7;
+  const gridStart = new Date(first);
+  gridStart.setDate(first.getDate() - offset);
+  const todayKey = dateKey(new Date());
+  const items = filteredReminders().map((item) => ({ item, due: parseDue(item.due) })).filter(({ due }) => due);
+
+  for (let i = 0; i < 42; i += 1) {
+    const day = new Date(gridStart);
+    day.setDate(gridStart.getDate() + i);
+    const key = dateKey(day);
+    const dayItems = items.filter(({ due }) => dateKey(due) === key);
+    const btn = document.createElement('button');
+    btn.className = 'day-cell';
+    if (day.getMonth() !== calendarMonth.getMonth()) btn.classList.add('muted');
+    if (key === todayKey) btn.classList.add('today');
+    if (key === selectedCalendarKey) btn.classList.add('selected');
+    btn.innerHTML = `<b>${day.getDate()}</b><span class="day-dots"></span>`;
+    const dots = btn.querySelector('.day-dots');
+    dayItems.slice(0, 4).forEach(({ item }) => {
+      const dot = document.createElement('i');
+      dot.style.setProperty('--dot-color', COLORS[item.color] || COLORS.purple);
+      dots.appendChild(dot);
+    });
+    btn.addEventListener('click', () => {
+      selectedCalendarKey = key;
+      if (day.getMonth() !== calendarMonth.getMonth()) calendarMonth = new Date(day.getFullYear(), day.getMonth(), 1);
+      renderCalendar();
+    });
+    els.calendarGrid.appendChild(btn);
+  }
+  renderSelectedDay(items);
+}
+
+function renderSelectedDay(items) {
+  const [y, m, d] = selectedCalendarKey.split('-').map(Number);
+  const selected = new Date(y, m - 1, d);
+  const entries = items.filter(({ due }) => dateKey(due) === selectedCalendarKey).sort((a, b) => a.due - b.due);
+  els.selectedDayList.innerHTML = `<p class="selected-day-title">${escapeHtml(formatDay(selected))}</p>`;
+  if (!entries.length) {
+    els.selectedDayList.innerHTML += '<div class="mini-card"><span><strong>Sin pendientes</strong><small>Este día está libre.</small></span></div>';
+    return;
+  }
+  entries.forEach(({ item, due }) => {
+    const card = document.createElement('button');
+    card.className = 'mini-card';
+    card.innerHTML = `<span><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.category)} · ${escapeHtml(item.notes || 'Sin notas')}</small></span><span class="agenda-time">${escapeHtml(formatTime(due))}</span>`;
+    card.addEventListener('click', () => openForm(item.id));
+    els.selectedDayList.appendChild(card);
+  });
+}
+
+function updateEmptyState() {
+  const count = filteredReminders().length;
+  els.empty.hidden = count !== 0;
+}
+
+function updateCountdowns(updateAll = true) {
   $$('.count-card').forEach((card) => {
     const item = reminders.find((r) => r.id === card.dataset.id);
     if (!item) return;
     const due = parseDue(item.due);
-    if (!due || Number.isNaN(due.getTime())) return;
+    if (!due) return;
     const remain = getRemaining(due);
     card.querySelector('[data-unit="days"]').textContent = remain.days;
     card.querySelector('[data-unit="hours"]').textContent = remain.hours;
@@ -398,7 +548,7 @@ function updateCountdowns() {
     card.querySelector('[data-unit="seconds"]').textContent = remain.seconds;
     card.querySelector('.status').textContent = statusFor(due);
   });
-  renderHero();
+  if (updateAll) { renderHero(); renderStats(); }
 }
 
 function buildColorPicker() {
@@ -410,10 +560,7 @@ function buildColorPicker() {
     btn.className = `color-dot ${name === selectedColor ? 'active' : ''}`;
     btn.style.setProperty('--dot', color);
     btn.title = name;
-    btn.addEventListener('click', () => {
-      selectedColor = name;
-      buildColorPicker();
-    });
+    btn.addEventListener('click', () => { selectedColor = name; buildColorPicker(); });
     wrap.appendChild(btn);
   });
 }
@@ -483,7 +630,7 @@ function deleteCurrent() {
   saveDraft();
   renderAll();
   closeForm();
-  toast('Recordatorio eliminado.');
+  toast('Recordatorio eliminado. Presiona Guardar GitHub para confirmar.');
 }
 
 function duplicateReminder(id) {
@@ -491,26 +638,34 @@ function duplicateReminder(id) {
   if (!item) return;
   const due = parseDue(item.due) || new Date();
   due.setDate(due.getDate() + 1);
-  const copy = {
-    ...item,
-    id: `${item.id}-copia-${Date.now().toString().slice(-5)}`,
-    title: `${item.title} copia`,
-    due: toLocalInputValue(due)
-  };
+  const copy = { ...item, id: `${item.id}-copia-${Date.now().toString().slice(-5)}`, title: `${item.title} copia`, due: toLocalInputValue(due) };
   reminders.push(copy);
   saveDraft();
   renderAll();
   toast('Duplicado. Edita la fecha si hace falta.');
 }
 
+function createQuickTest() {
+  const due = new Date(Date.now() + 20 * 60000);
+  const id = `prueba-${due.getFullYear()}${pad(due.getMonth()+1)}${pad(due.getDate())}${pad(due.getHours())}${pad(due.getMinutes())}`;
+  reminders.push({
+    id,
+    title: 'Prueba Telegram 20 min',
+    due: toLocalInputValue(due),
+    color: 'purple',
+    category: 'Personal',
+    notify: ['15m', 'due'],
+    notes: 'Prueba rápida creada desde Agenda.'
+  });
+  saveDraft();
+  renderAll();
+  toast('Prueba creada. Toca Guardar GitHub.');
+}
+
 async function copyJson() {
   const text = exportData();
-  try {
-    await navigator.clipboard.writeText(text);
-    toast('JSON copiado. Úsalo solo como respaldo manual.');
-  } catch {
-    toast('No pude copiar. Usa Descargar JSON.');
-  }
+  try { await navigator.clipboard.writeText(text); toast('JSON copiado como respaldo manual.'); }
+  catch { toast('No pude copiar. Usa Descargar JSON.'); }
 }
 
 function downloadJson() {
@@ -536,9 +691,7 @@ function importJsonFile(file) {
       saveDraft();
       renderAll();
       toast('JSON importado al borrador.');
-    } catch (error) {
-      toast(`Error al importar: ${error.message}`);
-    }
+    } catch (error) { toast(`Error al importar: ${error.message}`); }
   };
   reader.readAsText(file, 'utf-8');
 }
@@ -559,12 +712,18 @@ function openGithubHelp() {
   els.githubDialog.showModal();
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;'
+  }[char]));
+}
+
 let toastTimer;
 function toast(message) {
   els.toast.textContent = message;
   els.toast.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => els.toast.classList.remove('show'), 3200);
+  toastTimer = setTimeout(() => els.toast.classList.remove('show'), 3600);
 }
 
 function bindEvents() {
@@ -574,7 +733,7 @@ function bindEvents() {
   $('#closeFormBtn').addEventListener('click', closeForm);
   $('#deleteBtn').addEventListener('click', deleteCurrent);
   els.form.addEventListener('submit', submitForm);
-  els.search.addEventListener('input', renderCards);
+  els.search.addEventListener('input', renderAll);
   $('#copyJsonBtn').addEventListener('click', copyJson);
   $('#downloadJsonBtn').addEventListener('click', downloadJson);
   $('#githubHelpBtn').addEventListener('click', openGithubHelp);
@@ -595,6 +754,20 @@ function bindEvents() {
     if (file) importJsonFile(file);
     event.target.value = '';
   });
+  $$('.view-switch button').forEach((button) => button.addEventListener('click', () => {
+    activeView = button.dataset.view;
+    localStorage.setItem(VIEW_KEY, activeView);
+    renderAll();
+  }));
+  $('#prevMonthBtn').addEventListener('click', () => {
+    calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1);
+    renderCalendar();
+  });
+  $('#nextMonthBtn').addEventListener('click', () => {
+    calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1);
+    renderCalendar();
+  });
+  $('#quickTestBtn').addEventListener('click', createQuickTest);
 }
 
 if ('serviceWorker' in navigator) {

@@ -1,13 +1,24 @@
 {
-  "name": "CuentaAlerta",
+  "name": "CuentaAlerta Pro",
   "short_name": "CuentaAlerta",
-  "description": "Cuentas atrás con interfaz tipo iOS y avisos por Telegram.",
-  "start_url": "./",
+  "description": "Cuentas atrás con estilo iOS, GitHub y alertas por Telegram.",
+  "start_url": "./?v=4",
   "display": "standalone",
   "background_color": "#05060a",
   "theme_color": "#05060a",
+  "orientation": "portrait",
   "icons": [
-    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
-    { "src": "assets/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" }
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }

@@ -3,22 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#06070b" />
+  <meta name="theme-color" content="#05060a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="CuentaAlerta" />
-  <title>CuentaAlerta</title>
+  <title>CuentaAlerta Pro</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icon-192.svg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
   <div class="phone-shell">
     <header class="app-header">
-      <div>
-        <p class="eyebrow">GitHub + Telegram</p>
-        <h1>CuentaAlerta</h1>
+      <div class="brand-block">
+        <span class="status-dot"></span>
+        <div>
+          <p class="eyebrow">GitHub · Telegram · iPhone</p>
+          <h1>CuentaAlerta</h1>
+        </div>
       </div>
       <div class="header-actions">
         <button class="round-btn" id="openConfigBtn" aria-label="Configurar GitHub">⚙</button>
@@ -26,16 +32,25 @@
       </div>
     </header>
 
-    <section class="hero-card glass">
-      <div>
-        <p class="hero-label">Próximo aviso</p>
-        <h2 id="nextTitle">Cargando...</h2>
-        <p id="nextMeta">Leyendo reminders.json</p>
-      </div>
-      <div class="hero-pill" id="nextBadge">--</div>
+    <section class="hero-stack">
+      <article class="hero-card glass aurora-card">
+        <div>
+          <p class="hero-label">Próximo aviso</p>
+          <h2 id="nextTitle">Cargando...</h2>
+          <p id="nextMeta">Leyendo reminders.json</p>
+        </div>
+        <div class="hero-pill" id="nextBadge">--</div>
+      </article>
+
+      <section class="stats-row" aria-label="Resumen">
+        <div class="stat-tile glass"><b id="statToday">0</b><span>Hoy</span></div>
+        <div class="stat-tile glass"><b id="statWeek">0</b><span>7 días</span></div>
+        <div class="stat-tile glass"><b id="statLate">0</b><span>Vencidos</span></div>
+        <div class="stat-tile glass"><b id="statTotal">0</b><span>Total</span></div>
+      </section>
     </section>
 
-    <section class="toolbar">
+    <section class="toolbar glass-lite">
       <label class="search-box">
         <span>⌕</span>
         <input id="searchInput" type="search" placeholder="Buscar trámite, pago, limpieza..." autocomplete="off" />
@@ -44,9 +59,46 @@
       <input id="importFile" type="file" accept="application/json,.json" hidden />
     </section>
 
+    <section class="view-switch glass-lite" aria-label="Vista">
+      <button data-view="cards" class="active">Tarjetas</button>
+      <button data-view="agenda">Agenda</button>
+      <button data-view="calendar">Calendario</button>
+    </section>
+
     <section class="chips" id="categoryChips" aria-label="Categorías"></section>
 
-    <main id="reminderList" class="cards"></main>
+    <main>
+      <section id="cardsView" class="view-panel active">
+        <div id="reminderList" class="cards"></div>
+      </section>
+
+      <section id="agendaView" class="view-panel">
+        <div class="agenda-header glass-lite">
+          <div>
+            <p class="eyebrow">Agenda inteligente</p>
+            <h2>Lo que viene</h2>
+          </div>
+          <button class="small-btn" id="quickTestBtn">Prueba 20 min</button>
+        </div>
+        <div id="agendaList" class="agenda-list"></div>
+      </section>
+
+      <section id="calendarView" class="view-panel">
+        <div class="calendar-shell glass">
+          <div class="calendar-top">
+            <button class="round-mini" id="prevMonthBtn" aria-label="Mes anterior">‹</button>
+            <div>
+              <p class="eyebrow">Calendario</p>
+              <h2 id="calendarTitle">Mes</h2>
+            </div>
+            <button class="round-mini" id="nextMonthBtn" aria-label="Mes siguiente">›</button>
+          </div>
+          <div class="weekday-row"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+        <div id="selectedDayList" class="selected-day-list"></div>
+      </section>
+    </main>
 
     <section class="empty-state" id="emptyState" hidden>
       <div class="empty-icon">⏰</div>
@@ -109,6 +161,7 @@
       <div class="field">
         <label>¿Cuándo avisar por Telegram?</label>
         <div class="notify-grid" id="notifyGrid"></div>
+        <p class="field-help">Para pruebas rápidas usa 15 min + Llegada. GitHub revisa por intervalos.</p>
       </div>
 
       <div class="field">
@@ -118,7 +171,7 @@
 
       <div class="form-actions">
         <button type="button" id="deleteBtn" class="danger-btn" hidden>Eliminar</button>
-        <button type="submit" class="primary-btn">Guardar</button>
+        <button type="submit" class="primary-btn">Guardar local</button>
       </div>
     </form>
   </dialog>
@@ -133,10 +186,10 @@
       <button class="ghost-btn" id="closeGithubBtn">Cerrar</button>
     </div>
     <ol class="steps">
-      <li>Para guardar automático, configura tu token una sola vez en <b>⚙ Configuración</b>.</li>
-      <li>Después crea o edita recordatorios y toca <b>Guardar GitHub</b>.</li>
-      <li>La app actualizará <b>reminders.json</b> en tu repo.</li>
-      <li>GitHub Actions seguirá revisando y Telegram avisará.</li>
+      <li>Crea o edita recordatorios desde la app.</li>
+      <li>Toca <b>Guardar GitHub</b> para actualizar <b>reminders.json</b>.</li>
+      <li>GitHub Actions revisa solo y Telegram te avisa.</li>
+      <li>La vista Agenda y Calendario solo ordenan visualmente; las alertas siguen usando el JSON.</li>
     </ol>
     <a id="githubEditLink" class="primary-link" href="#" target="_blank" rel="noreferrer">Abrir reminders.json en GitHub</a>
     <p class="muted-note">Plan B: si algo falla, usa Copiar o Descargar y actualiza reminders.json manualmente.</p>
@@ -176,7 +229,7 @@
       <div class="field">
         <label for="githubTokenInput">Fine-grained token</label>
         <input id="githubTokenInput" type="password" autocomplete="off" placeholder="github_pat_..." />
-        <p class="field-help">Permiso mínimo recomendado: solo este repo + Contents: Read and write.</p>
+        <p class="field-help">Permiso mínimo: solo repo cuentaAtras + Contents: Read and write.</p>
       </div>
 
       <div class="form-actions wrap-actions">
