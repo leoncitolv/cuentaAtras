@@ -1,34 +1,18 @@
 [
   {
-    "id": "pasta-termica-play",
-    "title": "Pasta térmica Play",
-    "due": "2027-04-01T09:00",
-    "color": "purple",
-    "notify": ["7d", "1d", "1h", "due"],
-    "notes": "Cambiar pasta térmica, limpiar ventilación y revisar temperatura."
-  },
-  {
     "id": "gas-estacionario",
     "title": "Revisar gas estacionario",
-    "due": "2026-07-15T10:00",
+    "due": "2026-07-15T09:00",
     "color": "blue",
-    "notify": ["3d", "1d", "1h", "due"],
-    "notes": "Revisar nivel del tanque y programar recarga si hace falta."
+    "notify": ["1d", "1h", "due"],
+    "notes": "Revisar nivel y pedir recarga si hace falta."
   },
   {
     "id": "limpieza-play-xbox",
     "title": "Limpieza Play y Xbox",
-    "due": "2026-08-01T11:00",
+    "due": "2026-08-01T12:00",
     "color": "green",
-    "notify": ["7d", "1d", "1h", "due"],
-    "notes": "Limpieza externa, rejillas, controles y revisión de cables."
-  },
-  {
-    "id": "prueba-due-001",
-    "title": "Prueba inmediata CuentaAlerta",
-    "due": "2026-06-28T10:58",
-    "color": "purple",
-    "notify": ["due"],
-    "notes": "Esta prueba debe mandar Telegram casi de inmediato."
+    "notify": ["7d", "1d", "due"],
+    "notes": "Limpieza general, ventiladores y pasta térmica si aplica."
   }
 ]
