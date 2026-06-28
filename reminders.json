@@ -26,9 +26,9 @@
     "notes": "Limpieza general, ventiladores y pasta térmica si aplica."
   },
   {
-    "id": "prueba-202606281210",
-    "title": "Prueba",
-    "due": "2026-06-28T12:10",
+    "id": "prueba-2-202606281220",
+    "title": "Prueba 2",
+    "due": "2026-06-28T12:20",
     "color": "purple",
     "category": "Personal",
     "notify": [
@@ -36,6 +36,6 @@
       "1d",
       "due"
     ],
-    "notes": "Prueba"
+    "notes": "Msj prueba"
   }
 ]
