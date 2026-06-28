@@ -28,12 +28,11 @@
   {
     "id": "prueba-2-202606281220",
     "title": "Prueba 2",
-    "due": "2026-06-28T12:20",
+    "due": "2026-06-28T12:45",
     "color": "purple",
     "category": "Personal",
     "notify": [
-      "1h",
-      "1d",
+      "15m",
       "due"
     ],
     "notes": "Msj prueba"
