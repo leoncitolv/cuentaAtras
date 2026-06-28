@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#050509" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CuentaAlerta" />
+  <title>CuentaAlerta</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Recordatorios inteligentes</p>
+        <h1>Cuentas atrás</h1>
+      </div>
+      <button class="icon-button" id="openAdd" aria-label="Agregar cuenta atrás">+</button>
+    </header>
+
+    <section class="notice" id="setupNotice">
+      <div class="notice-icon">✦</div>
+      <div>
+        <strong>Modo GitHub + Telegram</strong>
+        <p>La interfaz vive en GitHub Pages. Las alertas reales salen por Telegram desde GitHub Actions.</p>
+      </div>
+    </section>
+
+    <section class="search-card">
+      <span>⌕</span>
+      <input id="searchInput" type="search" placeholder="Buscar trámite, pago, mantenimiento..." autocomplete="off" />
+    </section>
+
+    <section class="toolbar">
+      <button class="pill active" data-filter="all">Todos</button>
+      <button class="pill" data-filter="pending">Pendientes</button>
+      <button class="pill" data-filter="today">Hoy</button>
+      <button class="pill" data-filter="expired">Vencidos</button>
+    </section>
+
+    <main id="cards" class="cards" aria-live="polite"></main>
+
+    <section class="empty-state" id="emptyState" hidden>
+      <div class="empty-orb">⏱</div>
+      <h2>No hay cuentas atrás</h2>
+      <p>Agrega una desde el botón + o importa un archivo <code>reminders.json</code>.</p>
+    </section>
+
+    <nav class="bottom-tabs" aria-label="Navegación inferior">
+      <button class="tab active" data-view="home"><span>◷</span><small>Cuentas</small></button>
+      <button class="tab" data-view="export"><span>⇩</span><small>Exportar</small></button>
+      <button class="tab" data-view="help"><span>⋯</span><small>Guía</small></button>
+    </nav>
+  </div>
+
+  <dialog id="reminderDialog" class="sheet">
+    <form method="dialog" id="reminderForm">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title-row">
+        <h2 id="sheetTitle">Nueva cuenta atrás</h2>
+        <button type="button" class="ghost" id="closeDialog">Cerrar</button>
+      </div>
+
+      <input type="hidden" id="reminderId" />
+
+      <label>
+        Título
+        <input id="title" name="title" required maxlength="80" placeholder="Ej. Revisar gas estacionario" />
+      </label>
+
+      <label>
+        Fecha y hora
+        <input id="due" name="due" type="datetime-local" required />
+      </label>
+
+      <label>
+        Categoría visual
+        <select id="color" name="color">
+          <option value="purple">Morado</option>
+          <option value="blue">Azul</option>
+          <option value="green">Verde</option>
+          <option value="orange">Naranja</option>
+          <option value="pink">Rosa</option>
+          <option value="gray">Gris</option>
+        </select>
+      </label>
+
+      <fieldset class="notify-grid">
+        <legend>Alertas por Telegram</legend>
+        <label><input type="checkbox" value="7d" /> 7 días antes</label>
+        <label><input type="checkbox" value="3d" /> 3 días antes</label>
+        <label><input type="checkbox" value="1d" checked /> 1 día antes</label>
+        <label><input type="checkbox" value="12h" /> 12 horas antes</label>
+        <label><input type="checkbox" value="1h" checked /> 1 hora antes</label>
+        <label><input type="checkbox" value="15m" /> 15 minutos antes</label>
+        <label><input type="checkbox" value="due" checked /> Al momento</label>
+      </fieldset>
+
+      <label>
+        Notas
+        <textarea id="notes" name="notes" rows="3" placeholder="Datos importantes, link, referencia, monto, documentos..."></textarea>
+      </label>
+
+      <div class="sheet-actions">
+        <button type="button" class="danger" id="deleteReminder" hidden>Eliminar</button>
+        <button type="submit" class="primary">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="exportDialog" class="sheet large-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title-row">
+      <h2>Exportar para GitHub</h2>
+      <button class="ghost" id="closeExport">Cerrar</button>
+    </div>
+    <p class="muted">Esta web no guarda directo en GitHub por seguridad. Exporta el JSON y reemplaza el archivo <strong>reminders.json</strong> en tu repo.</p>
+    <div class="button-row">
+      <button class="primary" id="downloadJson">Descargar reminders.json</button>
+      <button class="secondary" id="copyJson">Copiar JSON</button>
+      <label class="secondary file-label">Importar JSON<input type="file" id="importJson" accept="application/json" hidden /></label>
+    </div>
+    <textarea id="jsonPreview" readonly rows="12" spellcheck="false"></textarea>
+  </dialog>
+
+  <dialog id="helpDialog" class="sheet large-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title-row">
+      <h2>Cómo usarla</h2>
+      <button class="ghost" id="closeHelp">Cerrar</button>
+    </div>
+    <div class="help-content">
+      <h3>1. Interfaz bonita</h3>
+      <p>Subes este proyecto a GitHub Pages y lo abres desde Safari. Luego lo agregas a pantalla de inicio para que se vea como app.</p>
+      <h3>2. Alertas reales</h3>
+      <p>GitHub Actions revisa <code>reminders.json</code> cada 15 minutos y manda mensajes por Telegram.</p>
+      <h3>3. Agregar recordatorios</h3>
+      <p>Puedes crearlos aquí, exportar el JSON y reemplazar el archivo <code>reminders.json</code> en GitHub.</p>
+      <h3>4. Seguridad</h3>
+      <p>El token de Telegram jamás se pone en el HTML. Va en GitHub Secrets.</p>
+    </div>
+  </dialog>
+
+  <template id="cardTemplate">
+    <article class="count-card">
+      <div class="card-topline">
+        <div>
+          <h2></h2>
+          <p class="due-label"></p>
+        </div>
+        <button class="card-menu" aria-label="Editar">Editar</button>
+      </div>
+      <div class="time-grid">
+        <div><strong data-part="days">0</strong><span>Días</span></div>
+        <div><strong data-part="hours">0</strong><span>Horas</span></div>
+        <div><strong data-part="minutes">0</strong><span>Minutos</span></div>
+        <div><strong data-part="seconds">0</strong><span>Segundos</span></div>
+      </div>
+      <p class="notes"></p>
+      <div class="chips"></div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
