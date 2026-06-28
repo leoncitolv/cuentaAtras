@@ -19,7 +19,8 @@ const NOTIFY_OPTIONS = [
 ];
 
 const DEFAULT_NOTIFY = ['1d', '1h', 'due'];
-const STORAGE_KEY = 'cuentaalerta_reminders_draft_v2';
+const STORAGE_KEY = 'cuentaalerta_reminders_draft_v3';
+const GITHUB_CONFIG_KEY = 'cuentaalerta_github_config_v1';
 let reminders = [];
 let activeCategory = 'Todos';
 let selectedColor = 'purple';
@@ -36,6 +37,7 @@ const els = {
   formDialog: $('#formDialog'),
   form: $('#reminderForm'),
   githubDialog: $('#githubDialog'),
+  configDialog: $('#configDialog'),
   toast: $('#toast'),
   nextTitle: $('#nextTitle'),
   nextMeta: $('#nextMeta'),
@@ -105,6 +107,176 @@ function cleanReminder(item) {
     notify: notify.length ? notify : DEFAULT_NOTIFY,
     notes: String(item.notes || '')
   };
+}
+
+
+function inferGithubConfig() {
+  const host = location.hostname;
+  const parts = location.pathname.split('/').filter(Boolean);
+  if (host.endsWith('.github.io') && parts.length) {
+    return {
+      owner: host.replace('.github.io', ''),
+      repo: parts[0],
+      branch: 'main',
+      token: ''
+    };
+  }
+  return { owner: '', repo: '', branch: 'main', token: '' };
+}
+
+function loadGithubConfig() {
+  const inferred = inferGithubConfig();
+  try {
+    const saved = JSON.parse(localStorage.getItem(GITHUB_CONFIG_KEY) || '{}');
+    return {
+      owner: saved.owner || inferred.owner,
+      repo: saved.repo || inferred.repo,
+      branch: saved.branch || inferred.branch || 'main',
+      token: saved.token || ''
+    };
+  } catch {
+    return inferred;
+  }
+}
+
+function saveGithubConfig(config) {
+  localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify({
+    owner: config.owner.trim(),
+    repo: config.repo.trim(),
+    branch: (config.branch || 'main').trim(),
+    token: config.token.trim()
+  }));
+}
+
+function getGithubConfigFromForm() {
+  return {
+    owner: $('#githubOwnerInput').value.trim(),
+    repo: $('#githubRepoInput').value.trim(),
+    branch: $('#githubBranchInput').value.trim() || 'main',
+    token: $('#githubTokenInput').value.trim()
+  };
+}
+
+function fillConfigForm() {
+  const config = loadGithubConfig();
+  $('#githubOwnerInput').value = config.owner;
+  $('#githubRepoInput').value = config.repo;
+  $('#githubBranchInput').value = config.branch || 'main';
+  $('#githubTokenInput').value = config.token;
+}
+
+function openConfig() {
+  fillConfigForm();
+  els.configDialog.showModal();
+}
+
+function closeConfig() { els.configDialog.close(); }
+
+function githubHeaders(token) {
+  return {
+    'Accept': 'application/vnd.github+json',
+    'Authorization': `Bearer ${token}`,
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+}
+
+function githubApiUrl(config) {
+  return `https://api.github.com/repos/${encodeURIComponent(config.owner)}/${encodeURIComponent(config.repo)}/contents/reminders.json?ref=${encodeURIComponent(config.branch || 'main')}`;
+}
+
+function toBase64Utf8(text) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary);
+}
+
+function validateGithubConfig(config) {
+  if (!config.owner || !config.repo || !config.branch) throw new Error('Falta usuario, repo o rama en configuración.');
+  if (!config.token) throw new Error('Falta el token de GitHub.');
+}
+
+async function getReminderFile(config) {
+  const response = await fetch(githubApiUrl(config), {
+    method: 'GET',
+    headers: githubHeaders(config.token)
+  });
+  if (response.status === 404) return { sha: null };
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data?.message || `GitHub respondió HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return { sha: data.sha || null };
+}
+
+async function testGithubConnection() {
+  const config = getGithubConfigFromForm();
+  try {
+    validateGithubConfig(config);
+    await getReminderFile(config);
+    saveGithubConfig(config);
+    toast('✅ Conexión correcta. Configuración guardada.');
+  } catch (error) {
+    toast(`GitHub: ${error.message}`);
+  }
+}
+
+async function saveToGithub() {
+  const config = loadGithubConfig();
+  try {
+    validateGithubConfig(config);
+  } catch (error) {
+    toast('Configura GitHub primero.');
+    openConfig();
+    return;
+  }
+
+  document.body.classList.add('github-saving');
+  $('#saveGithubBtn').disabled = true;
+  $('#saveGithubBtn').textContent = 'Guardando...';
+
+  try {
+    const file = await getReminderFile(config);
+    const body = {
+      message: `Actualizar reminders.json desde CuentaAlerta ${new Date().toLocaleString('es-MX')}`,
+      content: toBase64Utf8(exportData()),
+      branch: config.branch || 'main'
+    };
+    if (file.sha) body.sha = file.sha;
+
+    const response = await fetch(githubApiUrl(config).replace(/\?ref=.*/, ''), {
+      method: 'PUT',
+      headers: {
+        ...githubHeaders(config.token),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = data?.message || `GitHub respondió HTTP ${response.status}`;
+      throw new Error(message);
+    }
+
+    saveDraft();
+    toast('✅ Guardado en GitHub. Telegram avisará según tus fechas.');
+  } catch (error) {
+    toast(`No pude guardar: ${error.message}`);
+  } finally {
+    document.body.classList.remove('github-saving');
+    $('#saveGithubBtn').disabled = false;
+    $('#saveGithubBtn').textContent = 'Guardar GitHub';
+  }
+}
+
+function clearGithubToken() {
+  const config = loadGithubConfig();
+  config.token = '';
+  saveGithubConfig(config);
+  fillConfigForm();
+  toast('Token borrado de este dispositivo.');
 }
 
 async function loadReminders() {
@@ -300,7 +472,7 @@ function submitForm(event) {
   saveDraft();
   renderAll();
   closeForm();
-  toast('Guardado en borrador. Exporta el JSON y súbelo a GitHub.');
+  toast('Guardado local. Presiona Guardar GitHub para subirlo.');
 }
 
 function deleteCurrent() {
@@ -335,7 +507,7 @@ async function copyJson() {
   const text = exportData();
   try {
     await navigator.clipboard.writeText(text);
-    toast('JSON copiado. Pégalo en reminders.json de GitHub.');
+    toast('JSON copiado. Úsalo solo como respaldo manual.');
   } catch {
     toast('No pude copiar. Usa Descargar JSON.');
   }
@@ -397,6 +569,7 @@ function toast(message) {
 
 function bindEvents() {
   $('#openFormBtn').addEventListener('click', () => openForm());
+  $('#openConfigBtn').addEventListener('click', openConfig);
   $('#emptyAddBtn').addEventListener('click', () => openForm());
   $('#closeFormBtn').addEventListener('click', closeForm);
   $('#deleteBtn').addEventListener('click', deleteCurrent);
@@ -405,7 +578,17 @@ function bindEvents() {
   $('#copyJsonBtn').addEventListener('click', copyJson);
   $('#downloadJsonBtn').addEventListener('click', downloadJson);
   $('#githubHelpBtn').addEventListener('click', openGithubHelp);
+  $('#saveGithubBtn').addEventListener('click', saveToGithub);
   $('#closeGithubBtn').addEventListener('click', () => els.githubDialog.close());
+  $('#closeConfigBtn').addEventListener('click', closeConfig);
+  $('#configForm').addEventListener('submit', (event) => {
+    event.preventDefault();
+    saveGithubConfig(getGithubConfigFromForm());
+    closeConfig();
+    toast('Configuración de GitHub guardada en este dispositivo.');
+  });
+  $('#testGithubBtn').addEventListener('click', testGithubConnection);
+  $('#clearTokenBtn').addEventListener('click', clearGithubToken);
   $('#importBtn').addEventListener('click', () => $('#importFile').click());
   $('#importFile').addEventListener('change', (event) => {
     const file = event.target.files?.[0];

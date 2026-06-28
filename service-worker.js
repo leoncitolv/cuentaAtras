@@ -1,4 +1,4 @@
-const CACHE = 'cuentaalerta-v2';
+const CACHE = 'cuentaalerta-v3';
 const ASSETS = [
   './',
   './index.html',

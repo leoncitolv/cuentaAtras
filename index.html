@@ -20,7 +20,10 @@
         <p class="eyebrow">GitHub + Telegram</p>
         <h1>CuentaAlerta</h1>
       </div>
-      <button class="icon-btn" id="openFormBtn" aria-label="Agregar recordatorio">+</button>
+      <div class="header-actions">
+        <button class="round-btn" id="openConfigBtn" aria-label="Configurar GitHub">⚙</button>
+        <button class="icon-btn" id="openFormBtn" aria-label="Agregar recordatorio">+</button>
+      </div>
     </header>
 
     <section class="hero-card glass">
@@ -53,9 +56,10 @@
     </section>
 
     <nav class="bottom-actions glass">
-      <button id="copyJsonBtn">Copiar JSON</button>
-      <button id="downloadJsonBtn" class="accent">Descargar</button>
-      <button id="githubHelpBtn">Subir a GitHub</button>
+      <button id="copyJsonBtn">Copiar</button>
+      <button id="downloadJsonBtn">Descargar</button>
+      <button id="githubHelpBtn">Ayuda</button>
+      <button id="saveGithubBtn" class="accent">Guardar GitHub</button>
     </nav>
   </div>
 
@@ -123,20 +127,64 @@
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <div>
-        <p class="eyebrow">Paso final</p>
-        <h2>Subir a GitHub</h2>
+        <p class="eyebrow">Ayuda</p>
+        <h2>Guardar cambios</h2>
       </div>
       <button class="ghost-btn" id="closeGithubBtn">Cerrar</button>
     </div>
     <ol class="steps">
-      <li>Presiona <b>Copiar JSON</b> o <b>Descargar</b>.</li>
-      <li>En GitHub abre <b>reminders.json</b>.</li>
-      <li>Pega el JSON nuevo o sube el archivo.</li>
-      <li>Haz <b>Commit changes</b>.</li>
-      <li>GitHub Actions revisará automáticamente y Telegram avisará.</li>
+      <li>Para guardar automático, configura tu token una sola vez en <b>⚙ Configuración</b>.</li>
+      <li>Después crea o edita recordatorios y toca <b>Guardar GitHub</b>.</li>
+      <li>La app actualizará <b>reminders.json</b> en tu repo.</li>
+      <li>GitHub Actions seguirá revisando y Telegram avisará.</li>
     </ol>
     <a id="githubEditLink" class="primary-link" href="#" target="_blank" rel="noreferrer">Abrir reminders.json en GitHub</a>
-    <p class="muted-note">La app visual no puede escribir directo en tu repo sin token. Por seguridad, el token de Telegram se queda solo en GitHub Secrets.</p>
+    <p class="muted-note">Plan B: si algo falla, usa Copiar o Descargar y actualiza reminders.json manualmente.</p>
+  </dialog>
+
+  <dialog id="configDialog" class="sheet small-sheet">
+    <form id="configForm" method="dialog">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div>
+          <p class="eyebrow">Conexión segura</p>
+          <h2>GitHub</h2>
+        </div>
+        <button type="button" class="ghost-btn" id="closeConfigBtn">Cerrar</button>
+      </div>
+
+      <div class="security-box">
+        <b>Importante:</b> el token se guarda solamente en este iPhone/navegador. No se sube al repo ni se manda a Telegram.
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="githubOwnerInput">Usuario GitHub</label>
+          <input id="githubOwnerInput" autocomplete="username" placeholder="leoncitolv" required />
+        </div>
+        <div class="field">
+          <label for="githubRepoInput">Repositorio</label>
+          <input id="githubRepoInput" placeholder="cuentaAtras" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="githubBranchInput">Rama</label>
+        <input id="githubBranchInput" placeholder="main" value="main" required />
+      </div>
+
+      <div class="field">
+        <label for="githubTokenInput">Fine-grained token</label>
+        <input id="githubTokenInput" type="password" autocomplete="off" placeholder="github_pat_..." />
+        <p class="field-help">Permiso mínimo recomendado: solo este repo + Contents: Read and write.</p>
+      </div>
+
+      <div class="form-actions wrap-actions">
+        <button type="button" id="clearTokenBtn" class="danger-btn">Borrar token</button>
+        <button type="button" id="testGithubBtn" class="ghost-action">Probar</button>
+        <button type="submit" class="primary-btn">Guardar configuración</button>
+      </div>
+    </form>
   </dialog>
 
   <template id="cardTemplate">
