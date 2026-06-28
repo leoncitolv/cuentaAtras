@@ -22,5 +22,13 @@
     "color": "green",
     "notify": ["7d", "1d", "1h", "due"],
     "notes": "Limpieza externa, rejillas, controles y revisión de cables."
+  },
+  {
+    "id": "prueba-due-001",
+    "title": "Prueba inmediata CuentaAlerta",
+    "due": "2026-06-28T10:58",
+    "color": "purple",
+    "notify": ["due"],
+    "notes": "Esta prueba debe mandar Telegram casi de inmediato."
   }
 ]
