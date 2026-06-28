@@ -4,7 +4,12 @@
     "title": "Revisar gas estacionario",
     "due": "2026-07-15T09:00",
     "color": "blue",
-    "notify": ["1d", "1h", "due"],
+    "category": "Personal",
+    "notify": [
+      "1d",
+      "1h",
+      "due"
+    ],
     "notes": "Revisar nivel y pedir recarga si hace falta."
   },
   {
@@ -12,7 +17,25 @@
     "title": "Limpieza Play y Xbox",
     "due": "2026-08-01T12:00",
     "color": "green",
-    "notify": ["7d", "1d", "due"],
+    "category": "Personal",
+    "notify": [
+      "7d",
+      "1d",
+      "due"
+    ],
     "notes": "Limpieza general, ventiladores y pasta térmica si aplica."
+  },
+  {
+    "id": "prueba-202606281210",
+    "title": "Prueba",
+    "due": "2026-06-28T12:10",
+    "color": "purple",
+    "category": "Personal",
+    "notify": [
+      "1h",
+      "1d",
+      "due"
+    ],
+    "notes": "Prueba"
   }
 ]
