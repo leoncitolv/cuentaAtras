@@ -52,5 +52,18 @@
       "due"
     ],
     "notes": "Llevar credencial ine"
+  },
+  {
+    "id": "salgo-de-vacaciones-202607261220",
+    "title": "Salgo de vacaciones",
+    "due": "2026-07-26T12:20",
+    "color": "orange",
+    "category": "Personal",
+    "notify": [
+      "1h",
+      "1d",
+      "due"
+    ],
+    "notes": ""
   }
 ]
