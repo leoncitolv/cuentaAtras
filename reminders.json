@@ -37,5 +37,19 @@
       "due"
     ],
     "notes": "Msj prueba"
+  },
+  {
+    "id": "viene-el-albanil-202606291201",
+    "title": "Viene el albañil",
+    "due": "2026-06-29T12:01",
+    "color": "pink",
+    "category": "Personal",
+    "notify": [
+      "15m",
+      "1h",
+      "1d",
+      "due"
+    ],
+    "notes": "Se presenta para laborar"
   }
 ]
