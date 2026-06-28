@@ -3,168 +3,169 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#050509" />
+  <meta name="theme-color" content="#06070b" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="CuentaAlerta" />
   <title>CuentaAlerta</title>
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icon-192.svg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <header class="hero">
+  <div class="phone-shell">
+    <header class="app-header">
       <div>
-        <p class="eyebrow">Recordatorios inteligentes</p>
-        <h1>Cuentas atrás</h1>
+        <p class="eyebrow">GitHub + Telegram</p>
+        <h1>CuentaAlerta</h1>
       </div>
-      <button class="icon-button" id="openAdd" aria-label="Agregar cuenta atrás">+</button>
+      <button class="icon-btn" id="openFormBtn" aria-label="Agregar recordatorio">+</button>
     </header>
 
-    <section class="notice" id="setupNotice">
-      <div class="notice-icon">✦</div>
+    <section class="hero-card glass">
       <div>
-        <strong>Modo GitHub + Telegram</strong>
-        <p>La interfaz vive en GitHub Pages. Las alertas reales salen por Telegram desde GitHub Actions.</p>
+        <p class="hero-label">Próximo aviso</p>
+        <h2 id="nextTitle">Cargando...</h2>
+        <p id="nextMeta">Leyendo reminders.json</p>
       </div>
-    </section>
-
-    <section class="search-card">
-      <span>⌕</span>
-      <input id="searchInput" type="search" placeholder="Buscar trámite, pago, mantenimiento..." autocomplete="off" />
+      <div class="hero-pill" id="nextBadge">--</div>
     </section>
 
     <section class="toolbar">
-      <button class="pill active" data-filter="all">Todos</button>
-      <button class="pill" data-filter="pending">Pendientes</button>
-      <button class="pill" data-filter="today">Hoy</button>
-      <button class="pill" data-filter="expired">Vencidos</button>
+      <label class="search-box">
+        <span>⌕</span>
+        <input id="searchInput" type="search" placeholder="Buscar trámite, pago, limpieza..." autocomplete="off" />
+      </label>
+      <button class="small-btn" id="importBtn">Importar</button>
+      <input id="importFile" type="file" accept="application/json,.json" hidden />
     </section>
 
-    <main id="cards" class="cards" aria-live="polite"></main>
+    <section class="chips" id="categoryChips" aria-label="Categorías"></section>
+
+    <main id="reminderList" class="cards"></main>
 
     <section class="empty-state" id="emptyState" hidden>
-      <div class="empty-orb">⏱</div>
-      <h2>No hay cuentas atrás</h2>
-      <p>Agrega una desde el botón + o importa un archivo <code>reminders.json</code>.</p>
+      <div class="empty-icon">⏰</div>
+      <h2>Sin recordatorios</h2>
+      <p>Agrega uno nuevo o importa tu archivo reminders.json.</p>
+      <button class="primary-btn" id="emptyAddBtn">Crear recordatorio</button>
     </section>
 
-    <nav class="bottom-tabs" aria-label="Navegación inferior">
-      <button class="tab active" data-view="home"><span>◷</span><small>Cuentas</small></button>
-      <button class="tab" data-view="export"><span>⇩</span><small>Exportar</small></button>
-      <button class="tab" data-view="help"><span>⋯</span><small>Guía</small></button>
+    <nav class="bottom-actions glass">
+      <button id="copyJsonBtn">Copiar JSON</button>
+      <button id="downloadJsonBtn" class="accent">Descargar</button>
+      <button id="githubHelpBtn">Subir a GitHub</button>
     </nav>
   </div>
 
-  <dialog id="reminderDialog" class="sheet">
-    <form method="dialog" id="reminderForm">
+  <dialog id="formDialog" class="sheet">
+    <form id="reminderForm" method="dialog">
       <div class="sheet-handle"></div>
-      <div class="sheet-title-row">
-        <h2 id="sheetTitle">Nueva cuenta atrás</h2>
-        <button type="button" class="ghost" id="closeDialog">Cerrar</button>
+      <div class="sheet-header">
+        <div>
+          <p class="eyebrow">Recordatorio</p>
+          <h2 id="formTitle">Nuevo aviso</h2>
+        </div>
+        <button type="button" class="ghost-btn" id="closeFormBtn">Cerrar</button>
       </div>
 
-      <input type="hidden" id="reminderId" />
+      <input type="hidden" id="editingId" />
+      <div class="field">
+        <label for="titleInput">Título</label>
+        <input id="titleInput" required maxlength="80" placeholder="Ej. Revisar gas estacionario" />
+      </div>
 
-      <label>
-        Título
-        <input id="title" name="title" required maxlength="80" placeholder="Ej. Revisar gas estacionario" />
-      </label>
+      <div class="grid-2">
+        <div class="field">
+          <label for="dueInput">Fecha y hora</label>
+          <input id="dueInput" type="datetime-local" required />
+        </div>
+        <div class="field">
+          <label for="categoryInput">Categoría</label>
+          <select id="categoryInput">
+            <option>Trámite</option>
+            <option>Mantenimiento</option>
+            <option>Pago</option>
+            <option>Salud</option>
+            <option>Escuela</option>
+            <option>Casa</option>
+            <option>Auto</option>
+            <option>Personal</option>
+            <option>Otro</option>
+          </select>
+        </div>
+      </div>
 
-      <label>
-        Fecha y hora
-        <input id="due" name="due" type="datetime-local" required />
-      </label>
+      <div class="field">
+        <label>Color</label>
+        <div class="color-row" id="colorPicker"></div>
+      </div>
 
-      <label>
-        Categoría visual
-        <select id="color" name="color">
-          <option value="purple">Morado</option>
-          <option value="blue">Azul</option>
-          <option value="green">Verde</option>
-          <option value="orange">Naranja</option>
-          <option value="pink">Rosa</option>
-          <option value="gray">Gris</option>
-        </select>
-      </label>
+      <div class="field">
+        <label>¿Cuándo avisar por Telegram?</label>
+        <div class="notify-grid" id="notifyGrid"></div>
+      </div>
 
-      <fieldset class="notify-grid">
-        <legend>Alertas por Telegram</legend>
-        <label><input type="checkbox" value="7d" /> 7 días antes</label>
-        <label><input type="checkbox" value="3d" /> 3 días antes</label>
-        <label><input type="checkbox" value="1d" checked /> 1 día antes</label>
-        <label><input type="checkbox" value="12h" /> 12 horas antes</label>
-        <label><input type="checkbox" value="1h" checked /> 1 hora antes</label>
-        <label><input type="checkbox" value="15m" /> 15 minutos antes</label>
-        <label><input type="checkbox" value="due" checked /> Al momento</label>
-      </fieldset>
+      <div class="field">
+        <label for="notesInput">Notas</label>
+        <textarea id="notesInput" rows="4" maxlength="300" placeholder="Detalles opcionales, sin datos sensibles."></textarea>
+      </div>
 
-      <label>
-        Notas
-        <textarea id="notes" name="notes" rows="3" placeholder="Datos importantes, link, referencia, monto, documentos..."></textarea>
-      </label>
-
-      <div class="sheet-actions">
-        <button type="button" class="danger" id="deleteReminder" hidden>Eliminar</button>
-        <button type="submit" class="primary">Guardar</button>
+      <div class="form-actions">
+        <button type="button" id="deleteBtn" class="danger-btn" hidden>Eliminar</button>
+        <button type="submit" class="primary-btn">Guardar</button>
       </div>
     </form>
   </dialog>
 
-  <dialog id="exportDialog" class="sheet large-sheet">
+  <dialog id="githubDialog" class="sheet small-sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title-row">
-      <h2>Exportar para GitHub</h2>
-      <button class="ghost" id="closeExport">Cerrar</button>
+    <div class="sheet-header">
+      <div>
+        <p class="eyebrow">Paso final</p>
+        <h2>Subir a GitHub</h2>
+      </div>
+      <button class="ghost-btn" id="closeGithubBtn">Cerrar</button>
     </div>
-    <p class="muted">Esta web no guarda directo en GitHub por seguridad. Exporta el JSON y reemplaza el archivo <strong>reminders.json</strong> en tu repo.</p>
-    <div class="button-row">
-      <button class="primary" id="downloadJson">Descargar reminders.json</button>
-      <button class="secondary" id="copyJson">Copiar JSON</button>
-      <label class="secondary file-label">Importar JSON<input type="file" id="importJson" accept="application/json" hidden /></label>
-    </div>
-    <textarea id="jsonPreview" readonly rows="12" spellcheck="false"></textarea>
-  </dialog>
-
-  <dialog id="helpDialog" class="sheet large-sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-title-row">
-      <h2>Cómo usarla</h2>
-      <button class="ghost" id="closeHelp">Cerrar</button>
-    </div>
-    <div class="help-content">
-      <h3>1. Interfaz bonita</h3>
-      <p>Subes este proyecto a GitHub Pages y lo abres desde Safari. Luego lo agregas a pantalla de inicio para que se vea como app.</p>
-      <h3>2. Alertas reales</h3>
-      <p>GitHub Actions revisa <code>reminders.json</code> cada 15 minutos y manda mensajes por Telegram.</p>
-      <h3>3. Agregar recordatorios</h3>
-      <p>Puedes crearlos aquí, exportar el JSON y reemplazar el archivo <code>reminders.json</code> en GitHub.</p>
-      <h3>4. Seguridad</h3>
-      <p>El token de Telegram jamás se pone en el HTML. Va en GitHub Secrets.</p>
-    </div>
+    <ol class="steps">
+      <li>Presiona <b>Copiar JSON</b> o <b>Descargar</b>.</li>
+      <li>En GitHub abre <b>reminders.json</b>.</li>
+      <li>Pega el JSON nuevo o sube el archivo.</li>
+      <li>Haz <b>Commit changes</b>.</li>
+      <li>GitHub Actions revisará automáticamente y Telegram avisará.</li>
+    </ol>
+    <a id="githubEditLink" class="primary-link" href="#" target="_blank" rel="noreferrer">Abrir reminders.json en GitHub</a>
+    <p class="muted-note">La app visual no puede escribir directo en tu repo sin token. Por seguridad, el token de Telegram se queda solo en GitHub Secrets.</p>
   </dialog>
 
   <template id="cardTemplate">
     <article class="count-card">
       <div class="card-topline">
-        <div>
-          <h2></h2>
-          <p class="due-label"></p>
-        </div>
-        <button class="card-menu" aria-label="Editar">Editar</button>
+        <span class="tag"></span>
+        <span class="status"></span>
+      </div>
+      <div class="card-main">
+        <h3></h3>
+        <p class="notes"></p>
       </div>
       <div class="time-grid">
-        <div><strong data-part="days">0</strong><span>Días</span></div>
-        <div><strong data-part="hours">0</strong><span>Horas</span></div>
-        <div><strong data-part="minutes">0</strong><span>Minutos</span></div>
-        <div><strong data-part="seconds">0</strong><span>Segundos</span></div>
+        <div><b data-unit="days">0</b><span>Días</span></div>
+        <div><b data-unit="hours">0</b><span>Horas</span></div>
+        <div><b data-unit="minutes">0</b><span>Min</span></div>
+        <div><b data-unit="seconds">0</b><span>Seg</span></div>
       </div>
-      <p class="notes"></p>
-      <div class="chips"></div>
+      <div class="card-footer">
+        <span class="due-text"></span>
+        <div class="card-buttons">
+          <button class="text-btn duplicate-btn">Duplicar</button>
+          <button class="text-btn edit-btn">Editar</button>
+        </div>
+      </div>
     </article>
   </template>
 
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
 </body>
 </html>
