@@ -65,5 +65,17 @@
       "due"
     ],
     "notes": ""
+  },
+  {
+    "id": "termina-house-of-the-dragon-202608100700",
+    "title": "Termina house of the dragon",
+    "due": "2026-08-10T07:00",
+    "color": "green",
+    "category": "Personal",
+    "notify": [
+      "1h",
+      "due"
+    ],
+    "notes": "Pedir hbo"
   }
 ]
