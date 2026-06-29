@@ -26,20 +26,6 @@
     "notes": "Limpieza general, ventiladores y pasta térmica si aplica."
   },
   {
-    "id": "viene-el-albanil-202606291201",
-    "title": "Viene el albañil",
-    "due": "2026-06-29T12:01",
-    "color": "pink",
-    "category": "Personal",
-    "notify": [
-      "15m",
-      "1h",
-      "1d",
-      "due"
-    ],
-    "notes": "Se presenta para laborar"
-  },
-  {
     "id": "recoger-placas-202607090700",
     "title": "Recoger placas",
     "due": "2026-07-09T07:00",
@@ -77,5 +63,17 @@
       "due"
     ],
     "notes": "Pedir hbo"
+  },
+  {
+    "id": "viene-a-laboral-el-albanil-202607010900",
+    "title": "Viene a laboral el albañil",
+    "due": "2026-07-01T09:00",
+    "color": "blue",
+    "category": "Personal",
+    "notify": [
+      "1h",
+      "due"
+    ],
+    "notes": ""
   }
 ]
