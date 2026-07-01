@@ -88,5 +88,31 @@
       "1d"
     ],
     "notes": "Saber si conviene oh no"
+  },
+  {
+    "id": "santa-del-11-al-18-202607110800",
+    "title": "Santa del 11 al 18",
+    "due": "2026-07-11T08:00",
+    "color": "red",
+    "category": "Personal",
+    "notify": [
+      "15m",
+      "1d",
+      "due"
+    ],
+    "notes": "Días excelentes para compra"
+  },
+  {
+    "id": "nu-23-28-202607230917",
+    "title": "Nu 23-28",
+    "due": "2026-07-23T09:17",
+    "color": "cyan",
+    "category": "Personal",
+    "notify": [
+      "1h",
+      "1d",
+      "due"
+    ],
+    "notes": "Días buenos para compra"
   }
 ]
