@@ -29,7 +29,7 @@
     "id": "recoger-placas-202607090700",
     "title": "Recoger placas",
     "due": "2026-07-09T07:00",
-    "color": "blue",
+    "color": "pink",
     "category": "Personal",
     "notify": [
       "15m",
@@ -65,15 +65,16 @@
     "notes": "Pedir hbo"
   },
   {
-    "id": "viene-a-laboral-el-albanil-202607010900",
-    "title": "Viene a laboral el albañil",
-    "due": "2026-07-01T09:00",
-    "color": "blue",
-    "category": "Personal",
+    "id": "telcel-202607290000",
+    "title": "Telcel",
+    "due": "2026-07-29T00:00",
+    "color": "purple",
+    "category": "Pago",
     "notify": [
+      "15m",
       "1h",
-      "due"
+      "1d"
     ],
-    "notes": ""
+    "notes": "Recarga Telcel si conviene plan 300"
   }
 ]
