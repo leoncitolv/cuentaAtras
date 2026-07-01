@@ -140,5 +140,17 @@
       "due"
     ],
     "notes": ""
+  },
+  {
+    "id": "darle-una-vuelta-al-carro-202607231136",
+    "title": "Darle una vuelta al carro",
+    "due": "2026-07-23T11:36",
+    "color": "orange",
+    "category": "Personal",
+    "notify": [
+      "1h",
+      "due"
+    ],
+    "notes": "Darle un uso aprox de 30 minutos"
   }
 ]
