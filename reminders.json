@@ -76,5 +76,17 @@
       "1d"
     ],
     "notes": "Recarga Telcel si conviene plan 300"
+  },
+  {
+    "id": "dalefon-202607091029",
+    "title": "Dalefon",
+    "due": "2026-07-09T10:29",
+    "color": "green",
+    "category": "Personal",
+    "notify": [
+      "15m",
+      "1d"
+    ],
+    "notes": "Saber si conviene oh no"
   }
 ]
