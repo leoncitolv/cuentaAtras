@@ -6,7 +6,6 @@
     "color": "blue",
     "category": "Personal",
     "notify": [
-      "1d",
       "1h",
       "due"
     ],
@@ -19,25 +18,10 @@
     "color": "green",
     "category": "Personal",
     "notify": [
-      "7d",
-      "1d",
+      "15m",
       "due"
     ],
     "notes": "Limpieza general, ventiladores y pasta térmica si aplica."
-  },
-  {
-    "id": "recoger-placas-202607090700",
-    "title": "Recoger placas",
-    "due": "2026-07-09T07:00",
-    "color": "pink",
-    "category": "Personal",
-    "notify": [
-      "15m",
-      "1h",
-      "1d",
-      "due"
-    ],
-    "notes": "Llevar credencial ine"
   },
   {
     "id": "salgo-de-vacaciones-202607261220",
@@ -47,7 +31,6 @@
     "category": "Personal",
     "notify": [
       "1h",
-      "1d",
       "due"
     ],
     "notes": ""
@@ -72,22 +55,9 @@
     "category": "Pago",
     "notify": [
       "15m",
-      "1h",
-      "1d"
+      "1h"
     ],
     "notes": "Recarga Telcel si conviene plan 300"
-  },
-  {
-    "id": "dalefon-202607091029",
-    "title": "Dalefon",
-    "due": "2026-07-09T10:29",
-    "color": "green",
-    "category": "Personal",
-    "notify": [
-      "15m",
-      "1d"
-    ],
-    "notes": "Saber si conviene oh no"
   },
   {
     "id": "santa-del-11-al-18-202607110800",
@@ -97,7 +67,6 @@
     "category": "Personal",
     "notify": [
       "15m",
-      "1d",
       "due"
     ],
     "notes": "Días excelentes para compra"
@@ -110,7 +79,6 @@
     "category": "Personal",
     "notify": [
       "1h",
-      "1d",
       "due"
     ],
     "notes": "Días buenos para compra"
@@ -123,7 +91,6 @@
     "category": "Mantenimiento",
     "notify": [
       "1h",
-      "1d",
       "due"
     ],
     "notes": "Cambio de aceite según trayecto usado"
