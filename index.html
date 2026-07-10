@@ -3,147 +3,313 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#090013" />
-  <title>Mis Gastos Pro</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="theme-color" content="#05060a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CuentaAlerta" />
+  <title>CuentaAlerta Pro</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icon-192.svg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="mesh-bg"></div>
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
+  <div class="ambient ambient-three"></div>
 
-  <div class="app-shell">
-    <header class="hero">
-      <div class="control-bar glass-panel">
-        <div class="brand-chip"><span class="spark">✦</span> gastos</div>
-        <div class="profile-chip">
-          <span class="avatar">MG</span>
-          <div>
-            <strong>Mis Gastos</strong>
-            <small id="todayLabel"></small>
-          </div>
-        </div>
-        <button id="installBtn" class="install-btn hidden">Instalar</button>
-      </div>
-
-      <div class="app-card glass-panel">
-        <div class="app-icon">💸</div>
+  <div class="phone-shell">
+    <header class="app-header glass-nav">
+      <div class="brand-block">
+        <span class="status-dot"></span>
         <div>
-          <p class="eyebrow">Panel financiero</p>
-          <h1>Mis Gastos Pro</h1>
-          <p class="muted">Control visual de tarjetas, pagos y pendientes</p>
+          <p class="eyebrow">Panel premium · GitHub · Telegram</p>
+          <h1>CuentaAlerta</h1>
         </div>
+      </div>
+      <div class="header-actions">
+        <button class="round-btn" id="openConfigBtn" aria-label="Configurar GitHub">⚙</button>
+        <button class="icon-btn" id="openFormBtn" aria-label="Agregar recordatorio">+</button>
       </div>
     </header>
 
-    <section class="balance-card">
-      <div class="row between">
-        <span>Balance del mes</span><span id="monthName"></span>
-      </div>
-      <h2 id="balanceAmount">$0.00</h2>
-      <div class="mini-grid">
-        <div><small>Pagado</small><strong id="paidAmount">$0.00</strong></div>
-        <div><small>Pendiente</small><strong id="pendingAmount">$0.00</strong></div>
-        <div><small>Tarjetas</small><strong id="cardsCount">0</strong></div>
-      </div>
+    <section class="hero-stack">
+      <article class="hero-card glass aurora-card">
+        <div class="hero-copy">
+          <p class="hero-label">Balance de control</p>
+          <h2 id="nextTitle">Cargando...</h2>
+          <p id="nextMeta">Leyendo reminders.json</p>
+        </div>
+        <div class="hero-orb">
+          <span id="nextBadge">--</span>
+        </div>
+      </article>
+
+      <section class="stats-row" aria-label="Resumen">
+        <div class="stat-tile glass"><b id="statToday">0</b><span>Hoy</span></div>
+        <div class="stat-tile glass"><b id="statWeek">0</b><span>7 días</span></div>
+        <div class="stat-tile glass"><b id="statLate">0</b><span>Vencidos</span></div>
+        <div class="stat-tile glass"><b id="statTotal">0</b><span>Total</span></div>
+      </section>
     </section>
 
-    <nav class="tabs glass-panel">
-      <button class="tab active" data-view="dashboard">Inicio</button>
-      <button class="tab" data-view="expenses">Gastos</button>
-      <button class="tab" data-view="calendar">Calendario</button>
-      <button class="tab" data-view="settings">JSON</button>
-    </nav>
+    <section class="quick-actions" aria-label="Acciones rápidas">
+      <button class="action-card glass" id="quickAddBtn" type="button">
+        <span class="action-icon">＋</span>
+        <strong>Nuevo</strong>
+        <small>Gasto, pago o aviso</small>
+      </button>
+      <button class="action-card glass" id="quickImportBtn" type="button">
+        <span class="action-icon">⇪</span>
+        <strong>Importar</strong>
+        <small>Archivo JSON</small>
+      </button>
+      <button class="action-card glass" id="quickConfigBtn" type="button">
+        <span class="action-icon">⌬</span>
+        <strong>Conexión</strong>
+        <small>GitHub seguro</small>
+      </button>
+    </section>
+
+    <section class="toolbar glass-lite">
+      <label class="search-box">
+        <span>⌕</span>
+        <input id="searchInput" type="search" placeholder="Buscar pago, trámite, gasto o nota..." autocomplete="off" />
+      </label>
+      <button class="small-btn" id="importBtn">Importar</button>
+      <input id="importFile" type="file" accept="application/json,.json" hidden />
+    </section>
+
+    <section class="view-switch glass-nav" aria-label="Secciones principales">
+      <button data-view="cards" class="active"><span>⌂</span><small>Inicio</small></button>
+      <button data-view="agenda"><span>◈</span><small>Gastos</small></button>
+      <button data-view="calendar"><span>◷</span><small>Calendario</small></button>
+      <button data-view="json"><span>{ }</span><small>JSON</small></button>
+    </section>
+
+    <section class="chips" id="categoryChips" aria-label="Categorías"></section>
 
     <main>
-      <section id="dashboard" class="view active">
-        <p class="section-label">ACCIONES RÁPIDAS</p>
-        <div class="card soft action-card">
-          <div class="row between card-head"><h3>Agregar rápido</h3><span class="pill">modo neón</span></div>
-          <form id="expenseForm" class="form-grid">
-            <label id="conceptGroup"><span id="conceptLabel">Concepto / encargo</span><input id="concept" placeholder="Ej. Cancel, material, trabajo de casa..." required /></label>
-            <label id="amountGroup"><span id="amountLabel">Monto total</span><input id="amount" type="number" step="0.01" placeholder="Costo completo" required /></label>
-            <label id="paidGroup"><span>A cuenta inicial</span><input id="paid" type="number" step="0.01" placeholder="A cuenta" value="0" /></label>
-            <label><span>Tipo / tarjeta</span><select id="cardName"></select></label>
-            <label id="purchaseGroup"><span id="purchaseLabel">Inicio de pago / fecha a cuenta</span><input id="purchaseDate" type="date" /></label>
-            <label id="dueGroup"><span id="dueLabel">Fecha de entrega / límite de pago</span><input id="dueDate" type="date" required /></label>
-            <label id="extraPaidGroup"><span>Otro abono posterior</span><input id="extraPaid" type="number" step="0.01" placeholder="Otro pago a cuenta" /></label>
-            <label id="extraDateGroup"><span>Fecha del otro abono</span><input id="extraPaidDate" type="date" /></label>
-            <select id="category" class="encargoOnly">
-              <option>Encargo</option><option>Material</option><option>Trabajo casa</option><option>Tarjeta</option><option>Servicios</option><option>Casa</option><option>Auto</option><option>Otro</option>
-            </select>
-            <div class="rest-preview" id="restBox">
-              <span id="restLabel">Saldo pendiente automático</span>
-              <strong id="restPreview">$0.00</strong>
-            </div>
-            <textarea id="notes" class="encargoOnly" placeholder="Notas o guía de pago"></textarea>
-            <button class="primary" type="submit">Guardar gasto</button>
-          </form>
+      <section id="cardsView" class="view-panel active">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">Inicio</p>
+            <h2>Dashboard de pendientes</h2>
+          </div>
+          <span class="neon-label">Live</span>
         </div>
-
-        <div class="card warning" id="nextPaymentCard"></div>
-        <div class="section-title"><h3>Próximos pagos</h3><button id="demoBtn">Demo</button></div>
-        <div id="upcomingList" class="list"></div>
+        <div id="reminderList" class="cards"></div>
       </section>
 
-      <section id="expenses" class="view">
-        <div class="section-title"><h3>Todos los movimientos</h3><button id="clearBtn">Limpiar</button></div>
-        <div id="expenseList" class="list"></div>
+      <section id="agendaView" class="view-panel">
+        <div class="agenda-header glass-lite">
+          <div>
+            <p class="eyebrow">Gastos y pagos</p>
+            <h2>Lista inteligente</h2>
+          </div>
+          <button class="small-btn" id="quickTestBtn">Prueba 20 min</button>
+        </div>
+        <div id="agendaList" class="agenda-list"></div>
       </section>
 
-      <section id="calendar" class="view">
-        <div class="card soft">
-          <div class="row between"><button id="prevMonth">‹</button><h3 id="calendarTitle"></h3><button id="nextMonth">›</button></div>
-          <div class="week"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      <section id="calendarView" class="view-panel">
+        <div class="calendar-shell glass">
+          <div class="calendar-top">
+            <button class="round-mini" id="prevMonthBtn" aria-label="Mes anterior">‹</button>
+            <div>
+              <p class="eyebrow">Calendario</p>
+              <h2 id="calendarTitle">Mes</h2>
+            </div>
+            <button class="round-mini" id="nextMonthBtn" aria-label="Mes siguiente">›</button>
+          </div>
+          <div class="weekday-row"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
           <div id="calendarGrid" class="calendar-grid"></div>
         </div>
-        <div class="card soft calc">
-          <h3>Calculadora rápida</h3>
-          <input id="calcDisplay" readonly value="0" />
-          <div id="calcKeys" class="calc-keys"></div>
-        </div>
+        <div id="selectedDayList" class="selected-day-list"></div>
       </section>
 
-      <section id="settings" class="view">
-        <div class="card soft">
-          <h3>Tarjetas</h3>
-          <p class="muted">Configura tarjetas con saldo, corte, mejores fechas de compra y fecha límite. Encargos conserva abonos para trabajos de casa o materiales.</p>
-          <form id="cardForm" class="form-grid card-admin">
-            <input id="newCard" placeholder="Nombre: Santander, Nu o Encargos" />
-            <input id="cardBalance" type="number" step="0.01" placeholder="Saldo actual de la tarjeta" />
-            <input id="cutDay" type="number" min="1" max="31" placeholder="Día de corte, ej. 10" />
-            <input id="payDay" type="number" min="1" max="31" placeholder="Día límite pago, ej. 30" />
-            <button class="primary">Agregar tarjeta</button>
-          </form>
-          <div id="cardsList" class="card-list"></div>
-        </div>
-        <div class="card soft">
-          <h3>Exportar / importar JSON</h3>
-          <p class="muted">Guarda respaldo, llévalo a GitHub o úsalo para integrarlo con tu app de cuentas.</p>
-          <div class="actions"><button id="exportBtn" class="primary">Descargar JSON</button><label class="fileBtn">Importar JSON<input id="importInput" type="file" accept="application/json" /></label></div>
-          <textarea id="jsonPreview" readonly></textarea>
-        </div>
-        <div class="card soft">
-          <h3>Integración CuentaAtrás</h3>
-          <p class="muted">Pega aquí la liga de tu app CuentaAtrás en GitHub Pages. Desde cada tarjeta podrás mandar la fecha límite directo para crear el aviso.</p>
-          <input id="countdownUrl" placeholder="https://TU-USUARIO.github.io/cuentaAtras/" />
-          <button id="saveCountdownUrl" class="primary">Guardar liga de CuentaAtrás</button>
+      <section id="jsonView" class="view-panel">
+        <div class="json-console glass">
+          <div class="console-top">
+            <div>
+              <p class="eyebrow">JSON / respaldo</p>
+              <h2>Centro de sincronización</h2>
+              <p class="muted-note">Revisa, copia, descarga o sube a GitHub el mismo archivo que usa Telegram.</p>
+            </div>
+            <span class="console-badge">reminders.json</span>
+          </div>
+          <div class="json-actions">
+            <button id="copyJsonBtn" class="ghost-action" type="button">Copiar JSON</button>
+            <button id="downloadJsonBtn" class="ghost-action" type="button">Descargar</button>
+            <button id="githubHelpBtn" class="ghost-action" type="button">Ayuda</button>
+            <button id="saveGithubBtn" class="primary-btn accent" type="button">Guardar GitHub</button>
+          </div>
+          <pre id="jsonPreview" class="json-preview" aria-live="polite"></pre>
         </div>
       </section>
     </main>
 
-    <footer class="footer-mark">by jana · neon glass UI</footer>
+    <section class="empty-state glass" id="emptyState" hidden>
+      <div class="empty-icon">⏰</div>
+      <h2>Sin recordatorios</h2>
+      <p>Agrega uno nuevo o importa tu archivo reminders.json.</p>
+      <button class="primary-btn" id="emptyAddBtn">Crear recordatorio</button>
+    </section>
   </div>
 
-  <template id="expenseTemplate">
-    <article class="expense-item">
-      <div>
-        <h4></h4><p></p><small></small>
+  <dialog id="formDialog" class="sheet">
+    <form id="reminderForm" method="dialog">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div>
+          <p class="eyebrow">Recordatorio</p>
+          <h2 id="formTitle">Nuevo aviso</h2>
+        </div>
+        <button type="button" class="ghost-btn" id="closeFormBtn">Cerrar</button>
       </div>
-      <div class="amount-box"><strong></strong><span></span><button>✓</button></div>
+
+      <input type="hidden" id="editingId" />
+      <div class="field">
+        <label for="titleInput">Título</label>
+        <input id="titleInput" required maxlength="80" placeholder="Ej. Revisar gas estacionario" />
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="dueInput">Fecha y hora</label>
+          <input id="dueInput" type="datetime-local" required />
+        </div>
+        <div class="field">
+          <label for="categoryInput">Categoría</label>
+          <select id="categoryInput">
+            <option>Trámite</option>
+            <option>Mantenimiento</option>
+            <option>Pago</option>
+            <option>Salud</option>
+            <option>Escuela</option>
+            <option>Casa</option>
+            <option>Auto</option>
+            <option>Personal</option>
+            <option>Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Color</label>
+        <div class="color-row" id="colorPicker"></div>
+      </div>
+
+      <div class="field">
+        <label>¿Cuándo avisar por Telegram?</label>
+        <div class="notify-grid" id="notifyGrid"></div>
+        <p class="field-help">Para pruebas rápidas usa 15 min + Llegada. GitHub revisa por intervalos.</p>
+      </div>
+
+      <div class="field">
+        <label for="notesInput">Notas</label>
+        <textarea id="notesInput" rows="4" maxlength="300" placeholder="Detalles opcionales, sin datos sensibles."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" id="deleteBtn" class="danger-btn" hidden>Eliminar</button>
+        <button type="submit" class="primary-btn">Guardar local</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="githubDialog" class="sheet small-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div>
+        <p class="eyebrow">Ayuda</p>
+        <h2>Guardar cambios</h2>
+      </div>
+      <button class="ghost-btn" id="closeGithubBtn">Cerrar</button>
+    </div>
+    <ol class="steps">
+      <li>Crea o edita recordatorios desde la app.</li>
+      <li>Toca <b>Guardar GitHub</b> para actualizar <b>reminders.json</b>.</li>
+      <li>GitHub Actions revisa solo y Telegram te avisa.</li>
+      <li>La vista Agenda y Calendario solo ordenan visualmente; las alertas siguen usando el JSON.</li>
+    </ol>
+    <a id="githubEditLink" class="primary-link" href="#" target="_blank" rel="noreferrer">Abrir reminders.json en GitHub</a>
+    <p class="muted-note">Plan B: si algo falla, usa Copiar o Descargar y actualiza reminders.json manualmente.</p>
+  </dialog>
+
+  <dialog id="configDialog" class="sheet small-sheet">
+    <form id="configForm" method="dialog">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div>
+          <p class="eyebrow">Conexión segura</p>
+          <h2>GitHub</h2>
+        </div>
+        <button type="button" class="ghost-btn" id="closeConfigBtn">Cerrar</button>
+      </div>
+
+      <div class="security-box">
+        <b>Importante:</b> el token se guarda solamente en este iPhone/navegador. No se sube al repo ni se manda a Telegram.
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="githubOwnerInput">Usuario GitHub</label>
+          <input id="githubOwnerInput" autocomplete="username" placeholder="leoncitolv" required />
+        </div>
+        <div class="field">
+          <label for="githubRepoInput">Repositorio</label>
+          <input id="githubRepoInput" placeholder="cuentaAtras" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="githubBranchInput">Rama</label>
+        <input id="githubBranchInput" placeholder="main" value="main" required />
+      </div>
+
+      <div class="field">
+        <label for="githubTokenInput">Fine-grained token</label>
+        <input id="githubTokenInput" type="password" autocomplete="off" placeholder="github_pat_..." />
+        <p class="field-help">Permiso mínimo: solo repo cuentaAtras + Contents: Read and write.</p>
+      </div>
+
+      <div class="form-actions wrap-actions">
+        <button type="button" id="clearTokenBtn" class="danger-btn">Borrar token</button>
+        <button type="button" id="testGithubBtn" class="ghost-action">Probar</button>
+        <button type="submit" class="primary-btn">Guardar configuración</button>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="cardTemplate">
+    <article class="count-card">
+      <div class="card-topline">
+        <span class="tag"></span>
+        <span class="status"></span>
+      </div>
+      <div class="card-main">
+        <h3></h3>
+        <p class="notes"></p>
+      </div>
+      <div class="time-grid">
+        <div><b data-unit="days">0</b><span>Días</span></div>
+        <div><b data-unit="hours">0</b><span>Horas</span></div>
+        <div><b data-unit="minutes">0</b><span>Min</span></div>
+        <div><b data-unit="seconds">0</b><span>Seg</span></div>
+      </div>
+      <div class="card-footer">
+        <span class="due-text"></span>
+        <div class="card-buttons">
+          <button class="text-btn duplicate-btn">Duplicar</button>
+          <button class="text-btn edit-btn">Editar</button>
+        </div>
+      </div>
     </article>
   </template>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
 </body>
 </html>

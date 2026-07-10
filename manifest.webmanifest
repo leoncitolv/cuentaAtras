@@ -1,11 +1,11 @@
 {
   "name": "CuentaAlerta Pro",
   "short_name": "CuentaAlerta",
-  "description": "Cuentas atrás con estilo iOS, GitHub y alertas por Telegram.",
-  "start_url": "./?v=4",
+  "description": "Dashboard oscuro premium con recordatorios, calendario, JSON, GitHub y alertas por Telegram.",
+  "start_url": "./?v=5",
   "display": "standalone",
-  "background_color": "#05060a",
-  "theme_color": "#05060a",
+  "background_color": "#02030a",
+  "theme_color": "#12042a",
   "orientation": "portrait",
   "icons": [
     {

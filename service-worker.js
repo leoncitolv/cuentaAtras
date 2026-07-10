@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cuentaalerta-pro-v4.0.0';
+const CACHE_NAME = 'cuentaalerta-pro-v5-neon';
 const APP_SHELL = [
   './',
   './index.html',

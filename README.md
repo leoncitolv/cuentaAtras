@@ -1,34 +1,224 @@
-# Mis Gastos Pro — Rediseño Neon Glass
+# CuentaAlerta
 
-PWA instalable para controlar gastos de tarjetas, pagos pendientes y calendario.
+App web estilo iOS para llevar cuentas atrás y mandar alertas reales al iPhone mediante Telegram Bot + GitHub Actions.
 
-## Rediseño incluido
-- Estética oscura premium tipo app móvil.
-- Fondo morado/negro con textura de grid suave.
-- Tarjetas glassmorphism con transparencias, bordes luminosos y sombras.
-- Botones neón, degradados violeta/azul y acentos verde/amarillo.
-- Mantiene los mismos IDs y la lógica de `app.js`, por lo que conserva las funciones actuales.
+## Qué hace
 
-## Qué incluye
-- Registro de gasto, monto pagado y restante.
-- Calendario de futuros pagos.
-- Calculadora interna.
-- Tarjetas personalizables.
-- Exportación e importación JSON.
-- Campo preparado para endpoint de integración con CuentaAtrás.
+- Interfaz HTML/CSS/JS bonita, tipo iOS.
+- Funciona en GitHub Pages como página estática.
+- Se puede agregar a la pantalla de inicio del iPhone.
+- Lee tus pendientes desde `reminders.json`.
+- GitHub Actions revisa los pendientes cada 15 minutos.
+- Manda avisos por Telegram:
+  - 7 días antes
+  - 3 días antes
+  - 1 día antes
+  - 12 horas antes
+  - 1 hora antes
+  - 15 minutos antes
+  - al momento exacto aproximado
 
-## Subir a GitHub
-1. Descomprime el ZIP.
-2. Sube todos los archivos del folder `gastos-ios-pwa-neon` a tu repo.
-3. En GitHub activa Pages: Settings > Pages > Deploy from branch > main.
-4. Abre la URL en el celular y usa “Agregar a pantalla de inicio”.
+## Arquitectura
 
-## Estructura JSON
+```text
+iPhone
+  ↓ abre GitHub Pages
+HTML + CSS + JavaScript
+  ↓ muestra tus cuentas atrás
+reminders.json
+  ↓ leído por GitHub Actions
+scripts/check_reminders.py
+  ↓ manda aviso
+Telegram Bot
+  ↓
+Notificación en iPhone
+```
+
+## Archivos importantes
+
+```text
+index.html                         Interfaz principal
+styles.css                         Diseño tipo iOS
+app.js                             Lógica visual y exportación JSON
+reminders.json                     Tus recordatorios
+scripts/check_reminders.py         Script que manda Telegram
+.github/workflows/check-reminders.yml  Automatización de GitHub Actions
+.alert_state.json                  Historial para evitar alertas duplicadas
+manifest.webmanifest               Instalación como app web
+service-worker.js                  Caché básico
+assets/icon.svg                    Icono de la app
+```
+
+## Paso 1: Crear bot de Telegram
+
+1. Abre Telegram.
+2. Busca `@BotFather`.
+3. Escribe `/newbot`.
+4. Ponle nombre, por ejemplo `CuentaAlerta`.
+5. Guarda el token que te da. Se ve parecido a:
+
+```text
+1234567890:AAExampleTokenExampleTokenExample
+```
+
+6. Abre tu bot y mándale `/start`.
+7. Para obtener tu `chat_id`, abre en el navegador:
+
+```text
+https://api.telegram.org/botTU_TOKEN/getUpdates
+```
+
+Cambia `TU_TOKEN` por el token real. Busca algo como:
+
+```json
+"chat":{"id":123456789}
+```
+
+Ese número es tu `TELEGRAM_CHAT_ID`.
+
+## Paso 2: Subir a GitHub
+
+Desde Linux/Bazzite, dentro de la carpeta del proyecto:
+
+```bash
+git init
+git add .
+git commit -m "Primera version de CuentaAlerta"
+git branch -M main
+git remote add origin https://github.com/TU-USUARIO/CuentaAlerta.git
+git push -u origin main
+```
+
+## Paso 3: Activar GitHub Pages
+
+En GitHub:
+
+```text
+Repo CuentaAlerta
+→ Settings
+→ Pages
+→ Build and deployment
+→ Source: Deploy from a branch
+→ Branch: main
+→ Folder: / root
+→ Save
+```
+
+Después GitHub te dará una dirección parecida a:
+
+```text
+https://TU-USUARIO.github.io/CuentaAlerta/
+```
+
+## Paso 4: Configurar secretos de Telegram
+
+En GitHub:
+
+```text
+Repo CuentaAlerta
+→ Settings
+→ Secrets and variables
+→ Actions
+→ New repository secret
+```
+
+Crea estos secretos:
+
+```text
+TELEGRAM_BOT_TOKEN = token del bot
+TELEGRAM_CHAT_ID = tu chat_id
+```
+
+Luego crea estas variables:
+
+```text
+APP_TIMEZONE = America/Mexico_City
+APP_BASE_URL = https://TU-USUARIO.github.io/CuentaAlerta/
+```
+
+`APP_BASE_URL` es opcional, pero sirve para que el mensaje de Telegram incluya el enlace a tu app.
+
+## Paso 5: Probar la alerta manualmente
+
+En GitHub:
+
+```text
+Repo CuentaAlerta
+→ Actions
+→ CuentaAlerta Telegram
+→ Run workflow
+```
+
+Para probar rápido, edita `reminders.json` y pon un recordatorio para dentro de 15 o 20 minutos con:
+
+```json
+"notify": ["15m", "due"]
+```
+
+## Cómo agregar recordatorios
+
+Tienes dos formas.
+
+### Forma A: Desde la interfaz
+
+1. Abre la app web.
+2. Presiona `+`.
+3. Crea o edita recordatorios.
+4. Ve a `Exportar`.
+5. Descarga o copia el nuevo `reminders.json`.
+6. En GitHub reemplaza el archivo `reminders.json` y haz commit.
+
+### Forma B: Editar `reminders.json` directo
+
+Ejemplo:
+
 ```json
 {
-  "expenses": [],
-  "cards": ["Santander", "Nu", "Encargos"],
-  "apiUrl": "",
-  "countdownUrl": ""
+  "id": "pago-tenencia",
+  "title": "Pago de tenencia",
+  "due": "2026-07-30T09:00",
+  "color": "orange",
+  "notify": ["7d", "1d", "1h", "due"],
+  "notes": "Revisar documentos y comprobante."
 }
 ```
+
+## Agregar al iPhone como app
+
+En Safari abre tu GitHub Pages:
+
+```text
+https://TU-USUARIO.github.io/CuentaAlerta/
+```
+
+Luego:
+
+```text
+Compartir
+→ Agregar a pantalla de inicio
+→ Agregar
+```
+
+## Importante sobre privacidad
+
+Si tu repositorio es público, el archivo `reminders.json` también puede ser público. No pongas datos sensibles como contraseñas, datos bancarios, CURP, RFC completo, direcciones privadas o información médica.
+
+El token de Telegram sí queda seguro porque va en GitHub Secrets, no en el HTML.
+
+## Limitaciones
+
+- Las alertas dependen de GitHub Actions, por eso no son exactas al segundo.
+- GitHub Actions puede retrasarse algunos minutos.
+- La interfaz HTML no puede escribir directo a GitHub sin usar tokens; por seguridad se exporta el JSON y tú lo subes.
+- Para trámites, mantenimiento y recordatorios personales funciona muy bien. Para emergencias o medicamentos críticos, usa también una alarma del iPhone.
+
+
+## Parámetros desde Mis Gastos
+
+Esta versión puede abrir el formulario automáticamente desde una URL como:
+
+```text
+https://TU-USUARIO.github.io/cuentaAtras-main/?quick=1&title=Pagar%20Santander&due=2026-07-15T09:00&category=Tarjetas&notes=Saldo%20pendiente
+```
+
+Así la app de gastos puede mandar fecha límite de pago, título y notas directo a CuentaAtrás.
